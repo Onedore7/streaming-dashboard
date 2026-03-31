@@ -14,6 +14,11 @@ fastify.register(cors, {
   origin: '*'
 });
 
+// Primary Health Check Route for Render Root Ping
+fastify.get('/', async (request, reply) => {
+  return reply.send({ status: 'online', service: 'Streaming SaaS Infrastructure API' });
+});
+
 // A simple endpoint to list movies cached in DB
 fastify.get('/movies', async (request, reply) => {
   try {

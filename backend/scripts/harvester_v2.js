@@ -38,16 +38,20 @@ async function harvest() {
                     
                     // Deduplicate and structure
                     if (!masterDatabase[safeName]) {
-                        masterDatabase[safeName] = {
-                            id: safeName,
-                            name: plugin.name,
-                            description: plugin.description || 'No description provided.',
-                            version: plugin.version,
-                            language: plugin.language || 'en',
-                            // Some cloudstream models use specific URL patterns or baseUrls
-                            baseUrl: plugin.url || `https://${safeName}.generic.tv`,
-                            authors: plugin.authors || []
-                        };
+                        // User Override: Strict Plugin Sub-Selection logic
+                        if (safeName.includes('streamplay') || safeName.includes('kisskh')) {
+                            masterDatabase[safeName] = {
+                                id: safeName,
+                                name: plugin.name,
+                                description: plugin.description || 'No description provided.',
+                                version: plugin.version,
+                                language: plugin.language || 'en',
+                                // Some cloudstream models use specific URL patterns or baseUrls
+                                baseUrl: plugin.url || `https://${safeName}.generic.tv`,
+                                authors: plugin.authors || []
+                            };
+                            console.log(`[Harvester v2] Permitted explicitly requested provider: ${safeName}`);
+                        }
                     }
                 }
             } catch(e) {

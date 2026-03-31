@@ -12,7 +12,6 @@ async function harvest() {
     try {
         if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
-        // Phase 1: Fetch Master Index bypassing standard bot-blocks
         const response = await axios.get(REPO_URL, {
             headers: { 'User-Agent': 'Dalvik/2.1.0 (Linux; U; Android 11; Pixel 5)' }
         });
@@ -20,9 +19,6 @@ async function harvest() {
         const pluginLists = response.data.pluginLists || [];
         const masterDatabase = {};
 
-        console.log(`[Harvester v2] Found ${pluginLists.length} plugin list repositories. Traversing...`);
-
-        // Phase 2: Traverse deeply into each plugin .json URL
         for (const listUrl of pluginLists) {
             try {
                 const listRes = await axios.get(listUrl, {
@@ -33,24 +29,36 @@ async function harvest() {
                 for (const plugin of plugins) {
                     if (!plugin.name) continue;
                     
-                    // Sanitize name mapping for dictionary keys
                     const safeName = plugin.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
                     
-                    // Deduplicate and structure
                     if (!masterDatabase[safeName]) {
                         // User Override: Strict Plugin Sub-Selection logic
                         if (safeName.includes('streamplay') || safeName.includes('kisskh')) {
+                            
+                            // Map the Kotlin .cs3 payloads back to their physical website architectures for Puppeteer
+                            let realBaseUrl = `https://${safeName}.to`;
+                            let realSearchPath = '/search/';
+                            
+                            if (safeName.includes('kisskh')) {
+                                realBaseUrl = 'https://kisskh.co';
+                                realSearchPath = '/Search?q=';
+                            } else if (safeName.includes('streamplay')) {
+                                // Streamplay aggregates via MultiAPI. We map it identically to a generic robust host for our Puppeteer extraction engine
+                                realBaseUrl = 'https://flixhq.to';
+                                realSearchPath = '/search/';
+                            }
+
                             masterDatabase[safeName] = {
                                 id: safeName,
                                 name: plugin.name,
                                 description: plugin.description || 'No description provided.',
                                 version: plugin.version,
                                 language: plugin.language || 'en',
-                                // Some cloudstream models use specific URL patterns or baseUrls
-                                baseUrl: plugin.url || `https://${safeName}.generic.tv`,
+                                baseUrl: realBaseUrl,
+                                searchPath: realSearchPath,
                                 authors: plugin.authors || []
                             };
-                            console.log(`[Harvester v2] Permitted explicitly requested provider: ${safeName}`);
+                            console.log(`[Harvester v2] Restructured provider: ${safeName} -> ${realBaseUrl}`);
                         }
                     }
                 }
@@ -59,7 +67,6 @@ async function harvest() {
             }
         }
 
-        // Output securely
         const providerCount = Object.keys(masterDatabase).length;
         fs.writeFileSync(MASTER_DB_PATH, JSON.stringify(masterDatabase, null, 2));
         
@@ -71,7 +78,6 @@ async function harvest() {
     }
 }
 
-// Allow CLI execution
 if (require.main === module) {
     harvest();
 }

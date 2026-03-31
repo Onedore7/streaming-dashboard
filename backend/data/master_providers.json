@@ -5,7 +5,8 @@
     "description": "No description provided.",
     "version": 16,
     "language": "en",
-    "baseUrl": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/KisskhProvider.cs3",
+    "baseUrl": "https://kisskh.co",
+    "searchPath": "/Search?q=",
     "authors": [
       "Phisher98,Hexated,Peerless"
     ]
@@ -16,7 +17,8 @@
     "description": "#1 best extention based on MultiAPI",
     "version": 598,
     "language": "en",
-    "baseUrl": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/StreamPlay.cs3",
+    "baseUrl": "https://flixhq.to",
+    "searchPath": "/search/",
     "authors": [
       "Phisher98",
       "Hexated"

@@ -1,5 +1,5 @@
 const axios = require('axios');
-const { engine } = require('../../scrapers/movie_provider');
+const { engine } = require('../scrapers/movie_provider');
 
 class RepoParser {
     constructor() {

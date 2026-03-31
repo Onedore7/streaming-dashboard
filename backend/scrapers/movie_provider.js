@@ -1,6 +1,6 @@
 const axios = require('axios');
 const { HttpsProxyAgent } = require('https-proxy-agent');
-const ProxyManager = require('../backend/services/proxy_manager');
+const ProxyManager = require('../services/proxy_manager');
 
 /**
  * Executes Axios calls wrapped in residential proxies with auto-rotation.

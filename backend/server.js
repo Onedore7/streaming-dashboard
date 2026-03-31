@@ -2,7 +2,7 @@ const Fastify = require('fastify');
 const cors = require('@fastify/cors');
 const axios = require('axios');
 const path = require('path');
-const db = require('../database/db');
+const db = require('./database/db');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 const fastify = Fastify({
@@ -56,7 +56,7 @@ fastify.get('/stream', async (request, reply) => {
   }
 });
 
-const { engine } = require('../scrapers/movie_provider');
+const { engine } = require('./scrapers/movie_provider');
 
 // Core API logic wrapping the provider scraper engine
 fastify.get('/api/watch', async (request, reply) => {

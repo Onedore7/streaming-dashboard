@@ -1,28 +1,13 @@
 === HARVEST DRILL: AUTOMATED DRY RUN REPORT ===
-Execution Date: 2026-03-31T07:14:30.546Z
+Execution Date: 2026-03-31T08:40:45.664Z
 
-[TESTING: AllMovieLandProvider] 
-- Base URL: https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/AllMovieLandProvider.cs3
+[TESTING: KisskhProvider] 
+- Base URL: https://kisskh.co
 - Payload Interception: SUCCESS
 - M3U8 Source: https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8
 
-[TESTING: AllWish] 
-- Base URL: https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/AllWish.cs3
-- Payload Interception: SUCCESS
-- M3U8 Source: https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8
-
-[TESTING: Anichi] 
-- Base URL: https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Anichi.cs3
-- Payload Interception: SUCCESS
-- M3U8 Source: https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8
-
-[TESTING: Animeav1] 
-- Base URL: https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Animeav1.cs3
-- Payload Interception: SUCCESS
-- M3U8 Source: https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8
-
-[TESTING: AnimeCloud] 
-- Base URL: https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/AnimeCloud.cs3
+[TESTING: StreamPlay] 
+- Base URL: https://flixhq.to
 - Payload Interception: SUCCESS
 - M3U8 Source: https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8
 

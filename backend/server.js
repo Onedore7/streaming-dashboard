@@ -62,6 +62,8 @@ fastify.get('/stream', async (request, reply) => {
 });
 
 const { engine } = require('./scrapers/movie_provider');
+const genericExtractor = require('./scrapers/generic_extractor');
+const fs = require('fs');
 
 // Core API logic wrapping the provider scraper engine
 fastify.get('/api/watch', async (request, reply) => {

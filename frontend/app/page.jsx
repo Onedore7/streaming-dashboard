@@ -11,27 +11,33 @@ export default function Dashboard() {
   const [movies, setMovies] = useState([]);
   const [heroMovie, setHeroMovie] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [isWatching, setIsWatching] = useState(false);
+  const [gridTitle, setGridTitle] = useState("Trending Now");
   
   // New States for Vercel/Cloudstream Hook
   const [providers, setProviders] = useState([]);
   const [selectedProvider, setSelectedProvider] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
+  
+  // Extraction Logic
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [isWatching, setIsWatching] = useState(false);
   const [searchResultPlayUrl, setSearchResultPlayUrl] = useState("");
 
-  useEffect(() => {
-    // 1. Fetch Trending TMDB Cache exactly from Render
-    fetch(`${API_URL}/movies`)
+  const fetchTrending = () => {
+    fetch(`${API_URL}/api/tmdb/trending`)
       .then((res) => res.json())
       .then((json) => {
         if (json.data && json.data.length > 0) {
           setMovies(json.data);
+          setGridTitle("Trending Now");
           setHeroMovie(json.data[0]); 
         }
       })
-      .catch((err) => console.error("Failed to fetch movies from API", err));
+      .catch((err) => console.error("Failed to fetch TMDB trending UI from API", err));
+  };
 
-    // 2. Fetch the newly structured Master Provider Config List
+  useEffect(() => {
+    fetchTrending();
+    // Fetch the newly structured Master Provider Config List
     fetch(`${API_URL}/api/sources`)
       .then((res) => res.json())
       .then((json) => {
@@ -46,34 +52,58 @@ export default function Dashboard() {
 
   const handleSearch = async (e) => {
     e.preventDefault();
-    if (!searchQuery || !selectedProvider) return;
+    if (!searchQuery) {
+        fetchTrending();
+        return;
+    }
     
-    setIsSearching(true);
-    setSearchResultPlayUrl("");
-    
-    // Execute the actual AI/Generic API call live on Render!
+    // Phase 5: Fetch Graphic Movie Search Results FIRST (Netflix workflow!)
     try {
-        const res = await fetch(`${API_URL}/api/watch?provider=${selectedProvider}&id=${encodeURIComponent(searchQuery)}`);
+        const res = await fetch(`${API_URL}/api/tmdb/search?q=${encodeURIComponent(searchQuery)}`);
+        const json = await res.json();
+        
+        if (json.data && json.data.length > 0) {
+            setMovies(json.data);
+            setHeroMovie(json.data[0]);
+            setGridTitle(`Search Results for "${searchQuery}"`);
+        } else {
+            console.warn("No graphical results found on TMDB.");
+        }
+    } catch (err) {
+        console.error("TMDB Search Execution Failed", err);
+    }
+  };
+
+  const handleWatchNow = async () => {
+    if (!heroMovie || !selectedProvider) return;
+    setIsExtracting(true);
+    setSearchResultPlayUrl("");
+
+    // Phase 5: Actually Execute the Generic Cloudstream Extraction!
+    try {
+        const res = await fetch(`${API_URL}/api/watch?provider=${selectedProvider}&id=${encodeURIComponent(heroMovie.title)}`);
         const json = await res.json();
         
         if (json.data && json.data.success) {
             setSearchResultPlayUrl(json.data.sourceUrl);
             setIsWatching(true);
         } else {
-            alert('Generic Extractor Failed to intercept this specific stream via ' + selectedProvider);
+            alert('Cloudstream Failed: ' + selectedProvider + ' could not extract a native stream for this movie. Try FlixHQ or another generic provider!');
         }
     } catch (e) {
-        alert('API Connection Failed securely passing through CORS.');
+        alert('Extraction Intercept Failed securely passing through CORS.');
     }
-    
-    setIsSearching(false);
+    setIsExtracting(false);
   };
 
   return (
     <main className="relative w-full min-h-screen pb-20 bg-black">
       {/* Navigation (Glassmorphism & Search) */}
       <nav className="fixed top-0 w-full z-50 flex items-center justify-between px-8 py-5 transition-all duration-300 bg-gradient-to-b from-black/80 to-transparent">
-        <h1 className="text-red-600 font-black text-3xl tracking-tighter cursor-pointer drop-shadow-[0_0_15px_rgba(220,38,38,0.5)]">
+        <h1 
+          className="text-red-600 font-black text-3xl tracking-tighter cursor-pointer drop-shadow-[0_0_15px_rgba(220,38,38,0.5)]"
+          onClick={() => { setSearchQuery(""); fetchTrending(); }}
+        >
           SFLIX
         </h1>
         
@@ -95,14 +125,13 @@ export default function Dashboard() {
             <ChevronDown size={14} className="text-gray-300 absolute right-0 pointer-events-none" />
           </div>
 
-          <Search size={20} className="text-gray-300" />
+          <Search size={20} className="text-gray-300 cursor-pointer" onClick={handleSearch} />
           <input
             type="text"
-            placeholder={isSearching ? "Intercepting Stream..." : "Search generic cloudstream..."}
+            placeholder={"Search movie catalog..."}
             className="bg-transparent border-none outline-none text-white placeholder-gray-400 w-48 lg:w-64"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            disabled={isSearching}
           />
         </form>
       </nav>
@@ -120,7 +149,7 @@ export default function Dashboard() {
                    EXIT PLAYER
                  </button>
                  <PremiumPlayer 
-                    movieId={searchQuery || heroMovie.id} 
+                    movieId={heroMovie.title} 
                     streamType={(searchResultPlayUrl || "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8").includes('.mpd') ? 'mpd' : 'm3u8'} 
                     streamUrl={searchResultPlayUrl || "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"} 
                  />
@@ -129,19 +158,23 @@ export default function Dashboard() {
           ) : (
             <>
               <div className="absolute inset-0 z-0 scale-105 transform">
-                <Image
-                  src={heroMovie.backdrop_path || heroMovie.poster_path}
-                  alt={heroMovie.title}
-                  fill
-                  className="object-cover opacity-60 mix-blend-screen"
-                  priority
-                />
+                {heroMovie.backdrop_path ? (
+                    <Image
+                      src={heroMovie.backdrop_path}
+                      alt={heroMovie.title}
+                      fill
+                      className="object-cover opacity-60 mix-blend-screen"
+                      priority
+                    />
+                ) : (
+                    <div className="w-full h-full bg-neutral-900 absolute" />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-r from-black via-black/60 to-transparent" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/30" />
               </div>
 
               <div className="relative z-10 px-8 lg:px-16 max-w-2xl mt-20">
-                <span className="px-3 py-1 bg-red-600 text-xs font-bold text-white uppercase tracking-widest rounded mb-4 inline-block shadow-lg">Trending</span>
+                <span className="px-3 py-1 bg-red-600 text-xs font-bold text-white uppercase tracking-widest rounded mb-4 inline-block shadow-lg">New Fetch</span>
                 <h1 className="text-5xl lg:text-7xl font-bold text-white mb-4 drop-shadow-2xl">
                   {heroMovie.title}
                 </h1>
@@ -150,11 +183,12 @@ export default function Dashboard() {
                 </p>
                 <div className="flex gap-4">
                   <button 
-                    onClick={() => setIsWatching(true)}
-                    className="flex items-center gap-2 bg-white text-black px-8 py-3 rounded-md font-bold hover:scale-105 transition-transform shadow-xl"
+                    onClick={handleWatchNow}
+                    disabled={isExtracting}
+                    className="flex items-center gap-2 bg-white text-black px-8 py-3 rounded-md font-bold hover:scale-105 transition-transform shadow-xl disabled:opacity-50"
                   >
                     <Play fill="black" size={20} />
-                    Watch Now
+                    {isExtracting ? 'Extracting Stream...' : 'Watch Now'}
                   </button>
                   <button className="flex items-center gap-2 bg-white/20 backdrop-blur-md text-white px-8 py-3 rounded-md font-bold hover:bg-white/30 transition shadow-xl border border-white/10">
                     <Info size={20} />
@@ -167,9 +201,9 @@ export default function Dashboard() {
         </section>
       )}
 
-      {/* Horizontal List: Trending */}
+      {/* Horizontal List: TMDB Graphical Grid */}
       <section className="relative z-20 px-8 lg:px-16 mt-[-10vh]">
-        <h2 className="text-2xl font-bold text-white mb-6 drop-shadow-md border-l-4 border-red-600 pl-3">Trending Now</h2>
+        <h2 className="text-2xl font-bold text-white mb-6 drop-shadow-md border-l-4 border-red-600 pl-3">{gridTitle}</h2>
         
         <div className="flex gap-6 overflow-x-auto scrollbar-hide py-4 px-2 -mx-2">
           {movies.map((movie) => (

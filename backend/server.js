@@ -66,7 +66,7 @@ const genericExtractor = require('./scrapers/generic_extractor');
 const fs = require('fs');
 
 // --- NEW TMDB NATIVE CATALOG API ---
-const TMDB_API_KEY = process.env.TMDB_API_KEY;
+const TMDB_API_KEY = process.env.TMDB_API_KEY || '8d6d91941230817f7807d643736e8a49';
 
 fastify.get('/api/tmdb/trending', async (request, reply) => {
     try {

@@ -1,0 +1,11 @@
+node_modules/
+.env
+.next/
+dist/
+build/
+database.sqlite
+database.sqlite-wal
+database.sqlite-shm
+.DS_Store
+error.txt
+error_stack.txt

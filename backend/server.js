@@ -67,13 +67,25 @@ const fs = require('fs');
 
 // Core API logic wrapping the provider scraper engine
 fastify.get('/api/watch', async (request, reply) => {
-  const { id } = request.query;
+  const { id, provider } = request.query;
   if (!id) {
     return reply.status(400).send({ error: 'Video ID parameter is required.' });
   }
 
   try {
     request.log.info(`API request for /watch?id=${id} triggered`);
+
+    if (provider) {
+        const dbPath = path.join(__dirname, 'data/master_providers.json');
+        if (fs.existsSync(dbPath)) {
+            const dbData = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
+            if (dbData[provider]) {
+                const payload = await genericExtractor.extract(dbData[provider], id);
+                if (payload.success) return reply.send({ data: payload });
+            }
+        }
+    }
+
     // Engine iterates through providers like Loklok/Soap2Day asynchronously
     const payload = await engine.resolveMedia(id);
     

@@ -65,6 +65,46 @@ const { engine } = require('./scrapers/movie_provider');
 const genericExtractor = require('./scrapers/generic_extractor');
 const fs = require('fs');
 
+// --- NEW TMDB NATIVE CATALOG API ---
+const TMDB_API_KEY = process.env.TMDB_API_KEY;
+
+fastify.get('/api/tmdb/trending', async (request, reply) => {
+    try {
+        if (!TMDB_API_KEY) return reply.send({ data: [ { id: 'mock1', title: 'TMDB Key Missing', overview: 'Please add TMDB_API_KEY to Render config to see 4k covers!', poster_path: null, backdrop_path: null } ] });
+        const res = await axios.get(`https://api.themoviedb.org/3/trending/movie/day?api_key=\${TMDB_API_KEY}`);
+        const movies = res.data.results.map(m => ({
+            id: m.id,
+            title: m.title,
+            overview: m.overview,
+            poster_path: m.poster_path ? `https://image.tmdb.org/t/p/w500\${m.poster_path}` : null,
+            backdrop_path: m.backdrop_path ? `https://image.tmdb.org/t/p/original\${m.backdrop_path}` : null
+        }));
+        return reply.send({ data: movies });
+    } catch(err) {
+        return reply.status(500).send({ error: 'TMDB Trending API Error: ' + err.message });
+    }
+});
+
+fastify.get('/api/tmdb/search', async (request, reply) => {
+    try {
+        const { q } = request.query;
+        if (!q) return reply.status(400).send({ error: 'Missing explicit search query.' });
+        if (!TMDB_API_KEY) return reply.send({ data: [{ id: 'mocksearch', title: `Search Payload: \${q} (TMDB Key Missing)`, overview: 'Add TMDB_API_KEY to Render to view grid searches!', poster_path: null, backdrop_path: null }] });
+        
+        const res = await axios.get(`https://api.themoviedb.org/3/search/movie?query=\${encodeURIComponent(q)}&api_key=\${TMDB_API_KEY}`);
+        const movies = res.data.results.map(m => ({
+            id: m.id,
+            title: m.title,
+            overview: m.overview,
+            poster_path: m.poster_path ? `https://image.tmdb.org/t/p/w500\${m.poster_path}` : null,
+            backdrop_path: m.backdrop_path ? `https://image.tmdb.org/t/p/original\${m.backdrop_path}` : null
+        }));
+        return reply.send({ data: movies });
+    } catch(err) {
+        return reply.status(500).send({ error: 'TMDB Search API Error: ' + err.message });
+    }
+});
+
 // Core API logic wrapping the provider scraper engine
 fastify.get('/api/watch', async (request, reply) => {
   const { id, provider } = request.query;
@@ -73,7 +113,7 @@ fastify.get('/api/watch', async (request, reply) => {
   }
 
   try {
-    request.log.info(`API request for /watch?id=${id} triggered`);
+    request.log.info(`API request for /watch?id=\${id} triggered`);
 
     if (provider) {
         const dbPath = path.join(__dirname, 'data/master_providers.json');
@@ -138,7 +178,7 @@ const start = async () => {
   try {
     const port = process.env.PORT || 4000;
     await fastify.listen({ port: port, host: '0.0.0.0' });
-    fastify.log.info(`Server listening on ${port}`);
+    fastify.log.info(`Server listening on \${port}`);
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);
